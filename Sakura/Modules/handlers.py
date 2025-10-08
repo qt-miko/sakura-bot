@@ -88,8 +88,7 @@ async def handle_messages(client: Client, message: Message) -> None:
             return
 
         await send_typing(client, message.chat.id, user_info)
-        user_name = message.from_user.first_name or ""
-        ai_response = await get_response(user_message, user_name, user_info, user_id)
+        ai_response = await get_response(user_message, user_info, user_id)
 
         await set_last_message(user_id, ai_response)
 
