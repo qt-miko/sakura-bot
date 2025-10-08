@@ -24,7 +24,7 @@ Whether you're looking to:
 
 ## ✨ Features
 
-- **Contextual AI-Powered Conversations** — Powered by **SambaNova**, Sakura provides thoughtful, context-aware responses tailored to the conversation.
+- **Contextual AI-Powered Conversations** — Powered by **Google Gemini**, Sakura provides thoughtful, context-aware responses tailored to the conversation.
 - **Image, Poll, and Voice Message Analysis** — Send an image, poll, or voice message, and Sakura will analyze and comment on it.
 - **Contextual Emoji Reactions** — The bot automatically reacts to messages with animated emojis that match the context of the conversation.
 - **Sticker-Reply Support** — Reply to Sakura's messages with a sticker, and she'll send one back.
@@ -51,7 +51,7 @@ Whether you're looking to:
 
 - **Language:** Python 3.8+
 - **Core Libraries:** `Pyrogram`, `aiohttp`
-- **AI APIs:** SambaNova
+- **AI APIs:** Google Gemini
 - **Database:** PostgreSQL (via `asyncpg`)
 - **Caching:** Valkey (a high-performance Redis fork)
 - **Performance:** `uvloop` (for asyncio event loop), `orjson` (for fast JSON processing)

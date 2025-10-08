@@ -51,11 +51,13 @@ async def reply_image(client: Client, message: Message, user_message: str, user_
             photo = message.reply_to_message.photo
             image_bytes = await client.download_media(photo.file_id, in_memory=True)
 
-            user_name = message.from_user.first_name or ""
             caption = message.reply_to_message.caption or ""
 
             response = await get_response(
-                caption, user_name, user_info, user_info["user_id"], image_bytes=image_bytes
+                user_message=caption,
+                user_info=user_info,
+                user_id=user_info["user_id"],
+                image_bytes=image_bytes,
             )
 
             await message.reply_text(response)

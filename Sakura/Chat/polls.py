@@ -6,7 +6,6 @@ from Sakura.Core.helpers import log_action
 from Sakura.Modules.effects import animate_reaction
 from Sakura.Modules.reactions import CONTEXTUAL_REACTIONS
 from Sakura.Modules.typing import send_typing
-from Sakura.Database.conversation import add_history
 from Sakura.Chat.chat import get_response
 
 POLL_ANALYSIS_TRIGGERS = [
@@ -70,35 +69,31 @@ async def reply_poll(client: Client, message: Message, user_message: str, user_i
     return False
 
 async def analyze_poll(poll_question: str, poll_options: list, user_info: Dict[str, any], user_id: int) -> str:
-    """Analyzes a poll using the unified chat AI."""
+    """Analyzes a poll by formatting a prompt for the unified chat AI."""
     if user_info:
         log_action("DEBUG", f"📊 Analyzing poll: '{poll_question[:50]}...'", user_info)
 
     try:
         options_text = "\n".join([f"{i + 1}. {option}" for i, option in enumerate(poll_options)])
 
-        poll_prompt_message = f"""User has sent a poll or asked about a poll question. Analyze this question and suggest which option might be the correct answer.
+        # Create a concise prompt for the core get_response function
+        # The system prompt and history are handled by get_response
+        poll_prompt_message = f"""Please analyze the following poll and tell me the most likely correct answer and a brief reason why.
 
 Poll Question: "{poll_question}"
 
 Options:
 {options_text}
-
-Analyze this poll question and respond in Sakura's style about which option you think is correct and why. Keep it to one or two lines as per your character rules. Be helpful and give a quick reason.
-
-Sakura's response:"""
+"""
 
         response = await get_response(
             user_message=poll_prompt_message,
             user_id=user_id,
-            user_info=user_info
+            user_info=user_info,
         )
 
         if response:
-            poll_description = f"[Poll: {poll_question}] Options: {', '.join(poll_options)}"
-            await add_history(user_id, poll_description, is_user=True)
-            await add_history(user_id, response, is_user=False)
-            log_action("INFO", "✅ Poll analysis completed and saved to history", user_info)
+            log_action("INFO", "✅ Poll analysis completed", user_info)
             return response
         else:
             return "Poll analyze nahi kar paa rahi 😕"
