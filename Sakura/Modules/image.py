@@ -31,10 +31,14 @@ async def handle_image(client: Client, message: Message) -> None:
         image_bytes = image_file.read()
         log_action("DEBUG", f"📥 Image downloaded: {len(image_bytes)} bytes", user_info)
 
-        user_name = message.from_user.first_name or ""
         caption = message.caption or ""
 
-        response = await get_response(caption, user_name, user_info, message.from_user.id, image_bytes=image_bytes)
+        response = await get_response(
+            user_message=caption,
+            user_info=user_info,
+            user_id=message.from_user.id,
+            image_bytes=image_bytes
+        )
 
         log_action("DEBUG", f"📤 Sending image analysis: '{response[:50]}...'", user_info)
         await message.reply_text(response)

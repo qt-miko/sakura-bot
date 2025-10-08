@@ -7,7 +7,7 @@ from google import genai
 
 from Sakura import state
 from Sakura.Chat.prompts import SAKURA_PROMPT
-from Sakura.Core.config import AI_MODEL, GEMINI_API_KEY, OWNER_ID
+from Sakura.Core.config import AI_MODEL, GEMINI_API_KEY
 from Sakura.Core.helpers import get_error, get_fallback, log_action
 from Sakura.Core.logging import logger
 from Sakura.Database.conversation import add_history, get_history
@@ -26,14 +26,13 @@ def init_client():
     except Exception as e:
         logger.error(f"❌ Failed to initialize chat client: {e}")
 
-
 async def get_response(
     user_message: str,
     user_id: int,
     user_info: Dict[str, any] = None,
     image_bytes: Optional[bytes] = None,
 ) -> str:
-    """Get response from Google Gemini API."""
+    """Get response from Google Gemini API using a persistent chat session."""
     if user_info:
         log_action("DEBUG", f"🤖 Getting AI response for message: '{user_message[:50]}...'", user_info)
 
@@ -47,61 +46,49 @@ async def get_response(
         if user_info:
             log_action("INFO", f"🧠 Using model: {model_to_use}", user_info)
 
-        # Get and format conversation history
+        # 1. Prepare history for the chat session
         history_raw = await get_history(user_id)
-        history_formatted = []
+        chat_history = []
+        # Add system prompt first
+        chat_history.append({"role": "user", "parts": [SAKURA_PROMPT]})
+        chat_history.append({"role": "model", "parts": ["Okay, I will follow these instructions and roleplay as Sakura."]})
+
         for msg in history_raw:
-            # Gemini uses 'model' for assistant role
             role = "model" if msg["role"] == "assistant" else "user"
-            history_formatted.append({"role": role, "parts": [msg["content"]]})
+            chat_history.append({"role": role, "parts": [msg["content"]]})
 
-        # Prepare contents for Gemini API
-        # System prompt is the first message in the history
-        contents = [
-            # User provides instructions
-            {"role": "user", "parts": [SAKURA_PROMPT]},
-            # Model acknowledges
-            {"role": "model", "parts": ["Okay, I will follow these instructions and roleplay as Sakura."]}
-        ]
-        contents.extend(history_formatted)
+        # The Gemini library's start_chat will manage conversation turns correctly.
+        model = state.gemini_client.get_model(model_to_use)
+        chat_session = model.start_chat(history=chat_history)
 
-        # Add current user message and image (if any)
-        user_parts = []
+        # 2. Prepare the new message content
+        parts = []
         if user_message:
-            user_parts.append(user_message)
+            parts.append(user_message)
 
+        history_message = user_message
         if image_bytes:
             try:
-                # Gemini SDK can handle PIL images directly
                 img = Image.open(io.BytesIO(image_bytes))
-                user_parts.append(img)
+                parts.append(img)
                 history_message = f"[Image Analysis]: {user_message}" if user_message else "[Image Analysis]"
             except Exception as e:
                 log_action("ERROR", f"🖼️ Failed to process image: {e}", user_info)
-                history_message = user_message
-        else:
-            history_message = user_message
 
-        if not user_parts:
-            if user_info:
+        if not parts:
+             if user_info:
                 log_action("WARNING", "🤷‍♀️ No message content to send to AI.", user_info)
-            return get_fallback()
+             return get_fallback()
 
-        contents.append({"role": "user", "parts": user_parts})
-
-        # Generate content using Gemini
-        logger.debug("Sending request to Gemini API.")
-        # Using client.aio.models.generate_content as per user example and memory
-        response = await state.gemini_client.aio.models.generate_content(
-            model=model_to_use,
-            contents=contents,
-        )
-        logger.debug("Received response from Gemini API.")
+        # 3. Send message and get response
+        logger.debug("Sending message to Gemini chat session.")
+        response = await chat_session.send_message_async(parts)
+        logger.debug("Received response from Gemini chat session.")
 
         ai_response = response.text.strip() if response.text else get_fallback()
 
-        # Save to conversation history
-        if history_message:
+        # 4. Save to our database for future sessions
+        if history_message or image_bytes:
             await add_history(user_id, history_message, is_user=True)
         await add_history(user_id, ai_response, is_user=False)
 
@@ -111,7 +98,6 @@ async def get_response(
         return ai_response
 
     except Exception as e:
-        # It's helpful to log the full error for debugging
         import traceback
         full_error = traceback.format_exc()
         error_message = f"❌ AI API error: {e}\n{full_error}"

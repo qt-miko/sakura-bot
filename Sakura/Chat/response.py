@@ -13,7 +13,7 @@ async def get_response(
     """
     Gets a response from the AI.
     This is a wrapper that handles exceptions and ensures a fallback response.
-    History management is handled by the core _get_chat_response function.
+    History management is now handled by the core _get_chat_response function.
     """
     try:
         response = await _get_chat_response(
