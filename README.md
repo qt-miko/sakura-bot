@@ -63,15 +63,11 @@ Whether you're looking to:
 
 ```
 sakurachat-bot/
-├── sakura.py                # Main entry point
-├── requirements.txt         # Dependencies
-├── Dockerfile               # Docker container configuration
-├── Procfile                 # Process file for deployment
-├── README.md                # Project documentation
-└── Sakura/                  # Core bot package
-    ├── __init__.py          # Package initialization and exports
-    │
-    ├── Core/                # Core functionality and utilities
+├── Sakura/                  # Core bot package
+│   ├── __init__.py          # Package initialization
+│   ├── __main__.py          # Main entry point for module execution
+│   │
+│   ├── Core/                # Core functionality and utilities
     │   ├── __init__.py
     │   ├── config.py        # Configuration and environment variables
     │   ├── logging.py       # Custom colored logging setup
@@ -127,6 +123,30 @@ sakurachat-bot/
 ## 🌸 Sakura Bot
 
 A cute and charming Telegram bot that brings soft chats, sweet flirts, and a cozy vibe to your day.
+
+---
+
+## 🚀 Running Locally
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/qt-sakura/sakurachat-bot.git
+    cd sakurachat-bot
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Set up environment variables:**
+    - Create a `.env` file in the root directory.
+    - Add the required variables (see `Sakura/Core/config.py`).
+
+4.  **Run the bot:**
+    ```bash
+    python -m Sakura
+    ```
 
 ---
 
