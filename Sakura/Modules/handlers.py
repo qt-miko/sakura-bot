@@ -4,7 +4,6 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.enums import ChatAction
 from Sakura.Core.helpers import fetch_user, log_action, should_reply, get_error, log_response
-from Sakura.Services.limiter import check_limit
 from Sakura.Modules.reactions import handle_reaction
 from Sakura.Chat.images import reply_image
 from Sakura.Chat.polls import reply_poll
@@ -18,7 +17,6 @@ from Sakura.Core.config import OWNER_ID
 from Sakura.Modules.stickers import handle_sticker
 from Sakura.Modules.image import handle_image
 from Sakura.Modules.poll import handle_poll
-from Sakura.Services.tracking import track_user
 
 @Client.on_message(
     (filters.text | filters.sticker | filters.voice | filters.video_note |
@@ -38,8 +36,6 @@ async def handle_messages(client: Client, message: Message) -> None:
         # Send typing action immediately for better perceived responsiveness
         asyncio.create_task(send_typing(client, message.chat.id, user_info))
 
-        await track_user(message, user_info)
-
         if user_id == OWNER_ID and user_id in state.broadcast_mode:
             log_action("INFO", f"📢 Executing broadcast to {state.broadcast_mode[user_id]}", user_info)
             await execute_broadcast(message, client, state.broadcast_mode[user_id], user_info)
@@ -48,10 +44,6 @@ async def handle_messages(client: Client, message: Message) -> None:
 
         if chat_type in ['group', 'supergroup'] and not should_reply(message, client.me.id):
             log_action("DEBUG", "🚫 Not responding to group message (no mention/reply)", user_info)
-            return
-
-        if await check_limit(user_id, user_info["chat_id"]):
-            log_action("WARNING", "⏱️ Rate limited - ignoring message", user_info)
             return
 
         asyncio.create_task(handle_reaction(client, message, user_info))

@@ -1,6 +1,5 @@
 psutil
 uvloop
-valkey
 orjson
 asyncpg
 requests

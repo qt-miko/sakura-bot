@@ -7,7 +7,6 @@ from Sakura.Core.logging import logger
 from Sakura.Core.server import start_server_thread
 from Sakura.Core.utils import validate_config
 from Sakura.Database.database import connect_database, close_database
-from Sakura.Database.valkey import connect_cache, close_cache
 from Sakura.Services.cleanup import cleanup_conversations
 from Sakura.Chat.chat import init_client
 from Sakura import state
@@ -29,9 +28,6 @@ async def setup_commands(app: Client) -> None:
 
 async def post_init(app: Client):
     """Post initialization tasks"""
-    valkey_success = await connect_cache()
-    if not valkey_success:
-        logger.warning("⚠️ Valkey initialization failed. Bot will continue with memory fallback.")
     db_success = await connect_database()
     if not db_success:
         logger.error("❌ Database initialization failed. Bot will continue without persistence.")
@@ -51,7 +47,6 @@ async def post_shutdown(app: Client):
         except asyncio.CancelledError:
             logger.info("✅ Cleanup task cancelled successfully")
     await close_database()
-    await close_cache()
     logger.info("🌸 Sakura Bot shutdown completed!")
 
 
